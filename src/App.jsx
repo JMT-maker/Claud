@@ -446,7 +446,7 @@ function App() {
       window.Kakao.init("6e6d7995b670a926cf1f93574f302e04");
     }
     window.Kakao.Auth.authorize({
-      redirectUri: "http://localhost:5173/auth/kakao/callback",
+      redirectUri: `${window.location.origin}/auth/kakao/callback`,
       scope: 'talk_message'
     });
   };
