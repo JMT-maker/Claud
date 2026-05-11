@@ -1,20 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
-// 예시 코드
-if (!window.Kakao.isInitialized()) {
-  window.Kakao.init('6e6d7995b670a926cf1f93574f302e04');
-}
-// App.jsx 상단이나 useEffect 안의 초기화 로직
-useEffect(() => {
-  // window.Kakao가 존재하는지, 그리고 이미 초기화되었는지 확인
-  if (window.Kakao && !window.Kakao.isInitialized()) {
-    try {
-      window.Kakao.init('사용자님의_자바스크립트_키'); // 실제 키로 교체
-      console.log('카카오 SDK 초기화 성공');
-    } catch (e) {
-      console.error('카카오 초기화 실패:', e);
-    }
-  }
-}, []);
+
 // ══════════ PALETTE ══════════
 const D = {
   bg: '#07070f', panel: '#0d0d18', card: '#13131e', card2: '#191926',
@@ -243,6 +228,18 @@ const IsolatedTextarea = memo(({ initialValue, onBlur, placeholder }) => {
 
 // ══════════ APP ══════════
 export default function App() {
+  useEffect(() => {
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      try {
+        // 실제 키인 '6e6d7995b670a926cf1f93574f302e04'를 넣었습니다.
+        window.Kakao.init('6e6d7995b670a926cf1f93574f302e04');
+        console.log('카카오 SDK 초기화 성공');
+      } catch (e) {
+        console.error('카카오 초기화 실패:', e);
+      }
+    }
+  }, []);
+
   const [lang, setLang] = useState('ko');
   const T = useCallback((k) => LANGS[lang]?.[k] ?? LANGS.ko[k], [lang]);
 
