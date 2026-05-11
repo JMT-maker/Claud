@@ -441,15 +441,35 @@ function App() {
     setAiLoad(false);
   };
 // ── Kakao ────────────────────────────────────────────────────
-  const kakaoLogin = () => {
-    if (!window.Kakao.isInitialized()) {
-      window.Kakao.init("6e6d7995b670a926cf1f93574f302e04");
+const kakaoLogin = () => {
+  if (!window.Kakao.isInitialized()) {
+    window.Kakao.init("6e6d7995b670a926cf1f93574f302e04");
+  }
+  window.Kakao.Auth.login({
+    scope: 'talk_message',
+    success: (authObj) => {
+      window.Kakao.API.request({
+        url: '/v2/user/me',
+        success: (res) => {
+          setKakaoUser({
+            nickname: res.kakao_account?.profile?.nickname || '사용자',
+            img: res.kakao_account?.profile?.thumbnail_image_url || null,
+          });
+          setShareToast(`✅ ${res.kakao_account?.profile?.nickname || '사용자'}님 연동 완료!`);
+          setTimeout(() => setShareToast(''), 2500);
+        },
+        fail: (err) => {
+          setShareToast('❌ 사용자 정보 오류: ' + JSON.stringify(err));
+          setTimeout(() => setShareToast(''), 3000);
+        }
+      });
+    },
+    fail: (err) => {
+      setShareToast('❌ 로그인 실패: ' + JSON.stringify(err));
+      setTimeout(() => setShareToast(''), 3000);
     }
-    window.Kakao.Auth.authorize({
-      redirectUri: `${window.location.origin}/auth/kakao/callback`,
-      scope: 'talk_message'
-    });
-  };
+  });
+};
 
   const kakaoLogout = () => {
   if (!window.Kakao?.Auth?.getAccessToken()) { 
