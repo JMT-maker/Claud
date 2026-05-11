@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
-
+// 예시 코드
+if (!window.Kakao.isInitialized()) {
+  window.Kakao.init('6e6d7995b670a926cf1f93574f302e04');
+}
 // ══════════ PALETTE ══════════
 const D = {
   bg: '#07070f', panel: '#0d0d18', card: '#13131e', card2: '#191926',
