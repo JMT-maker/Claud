@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
-
+import KakaoCallback from "./KakaoCallback";
 // ══════════ PALETTE ══════════
 const D = {
   bg: '#07070f', panel: '#0d0d18', card: '#13131e', card2: '#191926',
@@ -227,7 +227,7 @@ const IsolatedTextarea = memo(({ initialValue, onBlur, placeholder }) => {
 });
 
 // ══════════ APP ══════════
-export default function App() {
+function App() {
   useEffect(() => {
     if (window.Kakao && !window.Kakao.isInitialized()) {
       try {
@@ -440,22 +440,43 @@ export default function App() {
     catch (e) { setAiError('퀴즈 오류: ' + e.message); }
     setAiLoad(false);
   };
-
-  // ── Kakao ────────────────────────────────────────────────────
-  const kakaoLogin = async () => {
-    if (isEmbedded) { setShareToast('⚠ 카카오 로그인은 Vercel 배포 후 사용 가능합니다'); setTimeout(() => setShareToast(''), 3000); return; }
-    if (!kakaoReady) { setShareToast('⏳ SDK 로딩 중...'); return; }
-    window.Kakao.Auth.login({
-      scope: 'talk_message',
-      success: () => { window.Kakao.API.request({ url: '/v2/user/me', success: res => { setKakaoUser({ nickname: res.kakao_account?.profile?.nickname || '사용자', img: res.kakao_account?.profile?.thumbnail_image_url || null }); setShareToast(`✅ ${res.kakao_account?.profile?.nickname || '사용자'}님 로그인 완료!`); setTimeout(() => setShareToast(''), 2500); } }); },
-      fail: err => { setShareToast('❌ 로그인 실패: ' + (err.error_description || err)); setTimeout(() => setShareToast(''), 3000); },
+// ── Kakao ────────────────────────────────────────────────────
+  const kakaoLogin = () => {
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init("6e6d7995b670a926cf1f93574f302e04");
+    }
+    window.Kakao.Auth.authorize({
+      redirectUri: "http://localhost:5173/auth/kakao/callback",
+      scope: 'talk_message'
     });
   };
-  const kakaoLogout = () => { if (!window.Kakao?.Auth?.getAccessToken()) { setKakaoUser(null); return; } window.Kakao.Auth.logout(() => { setKakaoUser(null); setShareToast('카카오 로그아웃'); setTimeout(() => setShareToast(''), 2000); }); };
-  const sendKakao = async () => {
-    if (!kakaoUser) { setShareToast('먼저 카카오 로그인을 해주세요.'); setTimeout(() => setShareToast(''), 2500); return; }
-    const evt = getEvt(); if (!evt?.notes_md) { setShareToast('❌ 먼저 학습 노트를 생성하세요.'); setTimeout(() => setShareToast(''), 2500); return; }
-    const preview = evt.notes_md.replace(/#{1,4}\s/g, '').replace(/\*\*/g, '').replace(/- \[ \] /g, '☐ ').slice(0, 800);
+
+  const kakaoLogout = () => {
+  if (!window.Kakao?.Auth?.getAccessToken()) { 
+    setKakaoUser(null); 
+    return; 
+  } 
+  window.Kakao.Auth.logout(() => { 
+    setKakaoUser(null); 
+    setShareToast('카카오 로그아웃'); 
+    setTimeout(() => setShareToast(''), 2000); 
+  }); 
+};
+
+const sendKakao = async () => {
+  if (!kakaoUser) { 
+    setShareToast('먼저 카카오 로그인을 해주세요.'); 
+    setTimeout(() => setShareToast(''), 2500); 
+    return; 
+  } 
+  const evt = getEvt(); 
+  if (!evt?.notes_md) { 
+    setShareToast('❌ 먼저 학습 노트를 생성하세요.'); 
+    setTimeout(() => setShareToast(''), 2500); 
+    return; 
+  } 
+  const preview = evt.notes_md.replace(/#{1,4}\s/g, '').replace(/\*\*/g, '').replace(/- \[ \] /g, '☐ ').slice(0, 800);
+  // ... 이후 로직 생략
     window.Kakao.API.request({
       url: '/v2/api/talk/memo/default/send',
       data: { template_object: { object_type: 'text', text: `📘 ${evt.title}\n📅 ${evt.date}\n\n${preview}${evt.notes_md.length > 800 ? '\n...(일부 생략)' : ''}`, link: { mobile_web_url: 'https://claude.ai', web_url: 'https://claude.ai' }, button_title: '자세히 보기' } },
@@ -955,12 +976,25 @@ export default function App() {
               </div>
             </div>
             {recOn && <div style={{ fontSize: 10, color: D.sub, marginTop: 3 }}>⏱ {fmt(recSec)}</div>}
-          </div>
+</div>
         )}
 
         {shareToast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: D.card, border: `1px solid ${D.ac}`, borderRadius: 10, padding: '12px 22px', fontSize: 13, fontWeight: 600, color: D.tx, zIndex: 500, boxShadow: '0 4px 24px #00000060', animation: 'fadeUp .2s' }}>{shareToast}</div>}
       </div>
     );
-  }
-  return null;
+  };
+
+  const isCallback = window.location.pathname === '/auth/kakao/callback';
+
+return (
+    <>
+      {window.location.pathname === '/auth/kakao/callback' ? (
+        <KakaoCallback setKakaoUser={setKakaoUser} />
+      ) : (
+        activeEvt ? renderEvtDetail() : renderMainList()
+      )}
+    </>
+  );
 }
+
+export default App;
